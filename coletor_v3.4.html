@@ -210,7 +210,7 @@
 
 <div class="top">
   <div>
-    <h1>Coletor de Demanda <span class="tag">SEFAZ-CE</span><span class="ver">v3.6</span></h1>
+    <h1>Coletor de Demanda <span class="tag">SEFAZ-CE</span><span class="ver">v3.7</span></h1>
   </div>
   <div class="top-r">
     <div class="autosave" id="autosave-ind"><span class="dot"></span><span id="autosave-txt">Salvamento automático ativo</span></div>
@@ -507,8 +507,8 @@ const MAPA_DATA = {
 const STORAGE_KEY = 'coletor-sefaz-ce-html-v2.1';
 const DIAS_UTEIS_MES = 22;
 const SEMANAS_MES = 4.33;
-const FREQ_FATOR = { dia: DIAS_UTEIS_MES, semana: SEMANAS_MES, mes: 1 };
-const FREQ_LABEL = { dia: 'por dia útil', semana: 'por semana', mes: 'por mês' };
+const FREQ_FATOR = { dia: DIAS_UTEIS_MES, semana: SEMANAS_MES, mes: 1, bimestre: 1/2, trimestre: 1/3, quadrimestre: 1/4, semestre: 1/6, ano: 1/12 };
+const FREQ_LABEL = { dia: 'por dia útil', semana: 'por semana', mes: 'por mês', bimestre: 'por bimestre', trimestre: 'por trimestre', quadrimestre: 'por quadrimestre', semestre: 'por semestre', ano: 'por ano' };
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 function defaultGestaoState() {
@@ -863,6 +863,10 @@ function onPlantaoChange(render=true) {
   const sim = $('f-plantao').value === 'sim';
   $('plantao-extra').style.display = sim ? 'block' : 'none';
   state.plantao.ativo = sim;
+  if (sim) {
+    const se = $('f-escala-dias'); if (!state.plantao.escalaDias) state.plantao.escalaDias = (se && se.value) || MAPA_DATA.plantaoEscalaDias[0];
+    const st = $('f-turno-plantao'); if (!state.plantao.turno) state.plantao.turno = (st && st.value) || MAPA_DATA.plantaoTurnos[0];
+  }
   if (render) markDirty();
 }
 
@@ -871,8 +875,8 @@ function onPlantaoChange(render=true) {
 function sincronizarPlantaoUI() {
   const selEscala = $('f-escala-dias');
   const selTurno = $('f-turno-plantao');
-  if (selEscala) selEscala.value = state.plantao.escalaDias || MAPA_DATA.plantaoEscalaDias[0];
-  if (selTurno) selTurno.value = state.plantao.turno || MAPA_DATA.plantaoTurnos[0];
+  if (selEscala) { selEscala.value = state.plantao.escalaDias || MAPA_DATA.plantaoEscalaDias[0]; state.plantao.escalaDias = selEscala.value; }
+  if (selTurno) { selTurno.value = state.plantao.turno || MAPA_DATA.plantaoTurnos[0]; state.plantao.turno = selTurno.value; }
   const outroEscala = $('f-escala-dias-outro');
   if (outroEscala) {
     outroEscala.style.display = (selEscala && selEscala.value === 'Outro') ? 'block' : 'none';
@@ -1152,6 +1156,11 @@ function htmlCorpoFrequencia(pid, ent, prefix) {
         <option value="dia" ${ent.freqUnidade==='dia'?'selected':''}>Por dia útil</option>
         <option value="semana" ${ent.freqUnidade==='semana'?'selected':''}>Por semana</option>
         <option value="mes" ${ent.freqUnidade==='mes'?'selected':''}>Por mês</option>
+        <option value="bimestre" ${ent.freqUnidade==='bimestre'?'selected':''}>Por bimestre</option>
+        <option value="trimestre" ${ent.freqUnidade==='trimestre'?'selected':''}>Por trimestre</option>
+        <option value="quadrimestre" ${ent.freqUnidade==='quadrimestre'?'selected':''}>Por quadrimestre</option>
+        <option value="semestre" ${ent.freqUnidade==='semestre'?'selected':''}>Por semestre</option>
+        <option value="ano" ${ent.freqUnidade==='ano'?'selected':''}>Por ano</option>
       </select>
     </div>
     <div class="fd ${temErro(p+'-freqqtd')?'field-err':''}" id="${p}-freqqtd" data-val-field="${p}-freqqtd" style="margin-bottom:0">
@@ -1445,6 +1454,11 @@ function htmlApoioCorpoFrequencia(p) {
         <option value="dia" ${p.freqUnidade==='dia'?'selected':''}>Por dia útil</option>
         <option value="semana" ${p.freqUnidade==='semana'?'selected':''}>Por semana</option>
         <option value="mes" ${p.freqUnidade==='mes'?'selected':''}>Por mês</option>
+        <option value="bimestre" ${p.freqUnidade==='bimestre'?'selected':''}>Por bimestre</option>
+        <option value="trimestre" ${p.freqUnidade==='trimestre'?'selected':''}>Por trimestre</option>
+        <option value="quadrimestre" ${p.freqUnidade==='quadrimestre'?'selected':''}>Por quadrimestre</option>
+        <option value="semestre" ${p.freqUnidade==='semestre'?'selected':''}>Por semestre</option>
+        <option value="ano" ${p.freqUnidade==='ano'?'selected':''}>Por ano</option>
       </select>
     </div>
     <div class="fd ${errQtd?'field-err':''}" id="apoio-${p.id}-freqqtd" data-val-field="apoio-${p.id}-freqqtd" style="margin-bottom:0">
@@ -2144,7 +2158,7 @@ function buildPayloadJson() {
   const gestao = ehCargoGestao();
   const apoio = ehCargoApoio();
   const base = {
-    versao: 'html-sefaz-ce-v3.6',
+    versao: 'html-sefaz-ce-v3.7',
     unidade: 'SEFAZ-CE',
     tipo_resposta: gestao ? 'gestao' : (apoio ? 'apoio' : 'operacional'),
     data_coleta: new Date().toISOString(),
@@ -2199,7 +2213,7 @@ function buildLinhasEstruturadas(enviadoEmOverride) {
     plantao: state.plantao.ativo ? 'SIM' : 'NAO', escala_dias: plantaoEscalaTexto(), turno_plantao: plantaoTurnoTexto(),
     cobertura_processos_exaustiva: state.coberturaProcessos || null,
     enviado: state.enviado?.enviado ? 'SIM' : 'NAO', enviado_em: enviadoEm, data_coleta: today,
-    versao_coletor: 'html-sefaz-ce-v3.6',
+    versao_coletor: 'html-sefaz-ce-v3.7',
   };
   const linhas = [];
   function linhaDeProcesso(proc, ent, complementar) {
@@ -2297,7 +2311,7 @@ function buildLinhaGestao(enviadoEmOverride) {
     adequacao_equipe: g.adequacaoEquipe, funcoes_equivalentes: g.funcoesEquivalentes, funcoes_equivalentes_quais: g.funcoesEquivalentesQuais || null,
     gaps_senioridade: g.gapsSenioridade, gaps_senioridade_detalhe: g.gapsSenioridadeDetalhe || null,
     enviado: state.enviado?.enviado ? 'SIM' : 'NAO', enviado_em: enviadoEm, data_coleta: today,
-    versao_coletor: 'html-sefaz-ce-v3.6',
+    versao_coletor: 'html-sefaz-ce-v3.7',
   };
 }
 
